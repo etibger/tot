@@ -36,3 +36,13 @@ def test_lt_hash():
     c3 = Card(1, "1", Suit.Palace)
     assert c1 is c3
     assert c1 == c3
+
+def test_card_kw_arg_creation():
+    """
+    Test that when a class is created with a keyword argument no new instance is
+    created
+    """
+    c1 = Card(1, "1", Suit.Palace)
+    c3 = Card(number=1, name="1", suit=Suit.Palace)
+    assert c1 is c3
+
