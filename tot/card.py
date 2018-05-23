@@ -36,7 +36,7 @@ class Card():
         else:
             number = kw['number']
         # Check if this number was already defined
-        card_idx = Card._find_id_in_card_list(number, __all_cards__)
+        card_idx = cls._find_id_in_card_list(number, __all_cards__)
 
         # if the card number havn't been already created create it and signal that
         # initialization still required for this class
