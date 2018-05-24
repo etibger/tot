@@ -4,15 +4,18 @@ from enum import Enum, auto
 
 __all__ = ['Card', 'Suit']
 
+
 class Suit(Enum):
-    Palace=auto()
-    Library=auto()
-    Garden=auto()
-    Temple=auto()
-    Stronghold=auto()
-    NonSuit=auto()
+    Palace = auto()
+    Library = auto()
+    Garden = auto()
+    Temple = auto()
+    Stronghold = auto()
+    NonSuit = auto()
+
 
 __all_cards__ = []
+
 
 class Card():
     # TODO is a Card really immutable?
@@ -24,6 +27,7 @@ class Card():
 
     # for immutability use __slots__ instead of __dict__ to store attributes
     __slots__ = ['number', 'name', 'suit', 'initialized']
+
     def __new__(cls, *args, **kw):
         # TODO add description
 
@@ -47,22 +51,22 @@ class Card():
             __all_cards__.append(instance)
             card_idx = len(__all_cards__) - 1
             super(Card, instance).__setattr__('initialized', False)
-            #instance.initialized = False
+            # instance.initialized = False
 
         return __all_cards__[card_idx]
 
     def __init__(self, number=0, name=None, suit=None):
         # TODO add description
-        if self.initialized :
+        if self.initialized:
             # TODO add logging feautre here
-            print("This item has been already initialized");
+            print("This item has been already initialized")
             return
         # because of the redefinition of __setattr__ the . notation doesn't work
         # use the super's setattr instead.
-        #self.number=number
-        #self.name=name
-        #self.suit=suit
-        #self.__initialized=True
+        # self.number=number
+        # self.name=name
+        # self.suit=suit
+        # self.__initialized=True
         super().__setattr__('number', number)
         super().__setattr__('name', name)
         super().__setattr__('suit', suit)
@@ -76,8 +80,8 @@ class Card():
         raise AttributeError(msg)
 
     def __str__(self):
-        #s="number: {number}, name: {name}, suit: {suit}".format(**self.__dict__)
-        s="number: {}, name: {}, suit: {}".format(self.number, self.name, self.suit)
+        # s="number: {number}, name: {name}, suit: {suit}".format(**self.__dict__)
+        s = "number: {}, name: {}, suit: {}".format(self.number, self.name, self.suit)
         return s
 
     def __lt__(self, other):
@@ -97,5 +101,5 @@ class Card():
         """
         # TODO add proper description
 
-        tmp_car = next(filter(lambda x: x[1].number == number, enumerate(card_list)), (None,None))
+        tmp_car = next(filter(lambda x: x[1].number == number, enumerate(card_list)), (None, None))
         return tmp_car[0]

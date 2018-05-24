@@ -2,6 +2,7 @@
 import pytest
 from tot.card import Card, Suit
 
+
 def test_card_singleton():
     """
     Test that the card is really a singleton. No two different instance should be
@@ -11,6 +12,7 @@ def test_card_singleton():
     c2 = Card(1, "first name", Suit.Palace)
     assert c1 is c2
 
+
 def test_card_print():
     """
     Test that the print method prints the expected format.
@@ -18,10 +20,12 @@ def test_card_print():
     c1 = Card(1, "first name", Suit.Palace)
     assert str(c1) == 'number: 1, name: first name, suit: Suit.Palace'
 
+
 def test_card_immutable():
     with pytest.raises(AttributeError):
         c1 = Card(1, "first name", Suit.Palace)
         c1.name = "modify this"
+
 
 def test_lt_hash():
     """
@@ -37,6 +41,7 @@ def test_lt_hash():
     assert c1 is c3
     assert c1 == c3
 
+
 def test_card_kw_arg_creation():
     """
     Test that when a class is created with a keyword argument no new instance is
@@ -45,4 +50,3 @@ def test_card_kw_arg_creation():
     c1 = Card(1, "1", Suit.Palace)
     c3 = Card(number=1, name="1", suit=Suit.Palace)
     assert c1 is c3
-
