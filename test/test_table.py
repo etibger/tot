@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # import pytest
 from heapq import nsmallest
-from tot.card import generate_cards, Table, Deck, Hand, print_all_cards
+from tot.card import generate_cards, Table, Deck, Hand
 # from tot.card import _all_cards
 
 
@@ -11,7 +11,6 @@ def test_simple_game():
 
 def simple_game():
     generate_cards()
-    print_all_cards()
     t1 = Table()
     d = Deck()
 #    print("Size of Deck: {}".format(len(d.deck)))
@@ -39,6 +38,9 @@ def simple_game():
         # swap hands
         h1, h2 = h2, h1
 
+    print("First turn:")
+    # print(t1)
+    t1.evaluate_table()
     # choose a card to discard
     plt1.discard_card(plt1.choose_largest())
     plt2.discard_card(plt2.choose_largest())
@@ -79,6 +81,10 @@ def simple_game():
         # print(plt1)
         # print(plt2)
         h1, h2 = h2, h1
+
+    print("Second turn:")
+    # print(t1)
+    t1.evaluate_table()
 
     # choose a card to discard
     plt1.discard_card(plt1.choose_largest())
@@ -121,6 +127,10 @@ def simple_game():
         # print(plt1)
         # print(plt2)
         h1, h2 = h2, h1
+
+    print("Third turn:")
+    # print(t1)
+    t1.evaluate_table()
 
     if len(d.deck) == 0:
         print("test pass")

@@ -47,12 +47,20 @@ class Table():
         self.plt1 = PlayerTable(table=self, name="plt1")
         self.plt2 = PlayerTable(table=self, name="plt2")
 
-    def get_other_player(self, plt):
-        return self.plt2 if plt is self.plt1 else self.plt1
-
     def __str__(self):
         s = str(self.plt1) + str(self.plt2)
         return s
+
+    def evaluate_table(self):
+        self.eval_non_vps()
+        self.eval_vps()
+
+    def eval_non_vps(self):
+        self.plt1.eval_non_vps()
+        self.plt2.eval_non_vps()
+
+    def eval_vps(self):
+        pass
 
 
 class PlayerTable():
@@ -60,6 +68,7 @@ class PlayerTable():
         self.cards = {}
         self.table = table
         self.win_ties = False
+        self.double_max = False
         self.name = name
         self.crd_cnt = {}
 
@@ -97,6 +106,18 @@ class PlayerTable():
         s = "".join(("{}:\n{}\n".format(self.name, self.crd_cnt),
                     "\n".join(str(crd) for __, crd in self.cards.items())))
         return(s)
+
+    def eval_non_vps(self):
+        self.win_ties = False
+        print("These are the Non Victory Point Cards:")
+        for crd in (v for __, v in self.cards.items() if v.vp is None):
+            if crd.cid == 1:
+                self.win_ties = True
+            if crd.cid == 17:
+                self.double_max = True
+            print(crd)
+        print("{} : win_ties = {}, double_max = {}\n".format(
+            self.name, self.win_ties, self.double_max))
 
 
 class Deck():
