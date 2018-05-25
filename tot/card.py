@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum, auto
-from random import shuffle
+from random import shuffle, choice
 
 # __all__ = ['Card', 'Suit']
 
@@ -44,29 +44,70 @@ __card_raw_data__ = [
 
 class Table():
     def __init__(self):
+        self.plt1 = PlayerTable(table=self, name="plt1")
+        self.plt2 = PlayerTable(table=self, name="plt2")
+
+    def get_other_player(self, plt):
+        return self.plt2 if plt is self.plt1 else self.plt1
+
+    def __str__(self):
+        s = str(self.plt1) + str(self.plt2)
+        return s
+
+
+class PlayerTable():
+    def __init__(self, table, name=None):
         self.cards = {}
+        self.table = table
         self.win_ties = False
+        self.name = name
+        self.crd_cnt = {}
 
     def place_card(self, card):
         self.cards[card.cid] = (card)
+        self.crd_cnt[card.suit] = self.crd_cnt.get(card.suit, 0) + 1
 
     def remove_cards(self):
         tmp_crds = {k: v for (k, v) in self.cards.items() if v.frozen is False}
         self.cards = {k: v for (k, v) in self.cards.items() if v.frozen is True}
+        self.crd_cnt = {}
+        for k, v in self.cards.items():
+            self.crd_cnt[v.suit] = self.crd_cnt.get(v.suit, 0) + 1
+
         return tmp_crds
 
+    def discard_card(self, cid):
+        self.cards.pop(cid)
+        # card = self.cards.pop(cid)
+        # print("[PLT - {}]: {} is discarded".format(self.name, card))
+
+    def freeze_card(self, cid):
+        self.cards[cid].freeze()
+
+    def choose_random(self):
+        return choice(list(self.cards.keys()))
+
+    def choose_smallest(self):
+        return min(list(self.cards.keys()))
+
+    def choose_largest(self):
+        return max(list(self.cards.keys()))
+
     def __str__(self):
-        s = "\n".join(str(crd) for crd in self.cards)
+        s = "".join(("{}:\n{}\n".format(self.name, self.crd_cnt),
+                    "\n".join(str(crd) for __, crd in self.cards.items())))
         return(s)
 
 
 class Deck():
     def __init__(self):
-        self.deck = list(range(1, 18))
+        self.deck = list(range(18, 0, -1))
+
+    def shuffle(self):
         shuffle(self.deck)
 
     def pop(self):
-        return self.deck.pop()
+        return _all_cards[self.deck.pop()-1]
 
 
 class Hand():
@@ -79,15 +120,26 @@ class Hand():
     def place_card(self, cid):
         return self.cards.pop(cid)
 
+    def place_rand(self):
+        return self.place_card(choice(list(self.cards.keys())))
+
+    def place_smallest(self):
+        return self.place_card(min(list(self.cards.keys())))
+
+    def __str__(self):
+        s = "\n".join(str(crd) for __, crd in self.cards.items())
+        return(s)
+
 
 class Card():
     """
     Store every relevant attribute about the ToT cards.
     """
-    def __init__(self, cid, name, suit):
+    def __init__(self, cid, name, suit, vp):
         self.__cid = cid
         self.name = name
         self.suit = suit
+        self.vp = vp
         self.frozen = False
 
     @property
@@ -99,7 +151,9 @@ class Card():
         return self.__cid
 
     def __str__(self):
-        s = "cid: {_Card__cid}, name: {name}, suit: {suit.name}".format(**self.__dict__)
+        s = "cid: {_Card__cid}, name: {name}, suit: {suit.name}, vp: {vp}".format(**self.__dict__)
+        if self.frozen:
+            s = "* " + s
         return s
 
     def __lt__(self, other):
@@ -120,21 +174,15 @@ class Card():
     def freeze(self):
         self.frozen = True
 
-    @staticmethod
-    def _find_id_in_card_list(number, card_list):
-        """
-        Searches for the card number in the given card_list and returns it's index
-        if found and None when not.
-        """
-        # TODO add proper description
-
-        tmp_crd = next(filter(lambda x: x[1].number == number, enumerate(card_list)), (None, None))
-        return tmp_crd[0]
-
 
 def generate_cards():
     for crd in __card_raw_data__:
-        _all_cards.append(Card(crd[0], crd[1], Suit[crd[2]]))
+        _all_cards.append(Card(crd[0], crd[1], Suit[crd[2]], crd[4]))
+
+
+def del_cards():
+    for crd in _all_cards:
+        crd.frozen = False
 
 
 def print_all_cards():
