@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from enum import Enum, auto
+from random import shuffle
 
-__all__ = ['Card', 'Suit']
+# __all__ = ['Card', 'Suit']
 
 
 class Suit(Enum):
@@ -14,92 +15,128 @@ class Suit(Enum):
     NonSuit = auto()
 
 
-__all_cards__ = []
+_all_cards = []
+
+
+__card_raw_data__ = [
+        [1, "Kings Nest", "Palace", "Win ties", None],
+        [2, "Ancient Divide", "Palace", "Win majority of Stronghold", 7],
+        [3, "Eternal Palace", "Palace", "For each Library", 3],
+        [4, "The Great Library of Ahm", "Library", "Win majority of Temple", 7],
+        [5, "The Mana Well", "Library", "For each Set Palace,Stronghold,Temple", 9],
+        [6, "The Citadel of the Prophets", "Library", "For each Garden", 3],
+        [7, "Golden Ziggurat", "Garden", "Win majority of Palace", 7],
+        [8, "Gods Bath", "Garden", "For each Stronghold", 3],
+        [9, "The Maze of the Damend", "Garden",
+            "For each set Palace,Stronghold,Garden,Library,Temple", 13],
+        [10, "The Eye of the North", "Stronghold", "For each NotOwn Suit", 3],
+        [11, "The Jinn Shackles", "Stronghold", "For each Stronghold", 3],
+        [12, "Old Man's Pass", "Stronghold", "Win majority of Library", 7],
+        [13, "Blood-tear Spring", "Temple", "Win majority of Gaden", 7],
+        [14, "The Sky Pillars", "Temple", "For each set Library,Garden", 5],
+        [15, "The Vestibule", "Temple", "For each Palace", 3],
+        [16, "The Molehill", "NonSuit", "Win more SingleSuits", 8],
+        [17, "The Roof of the World", "NonSuit",
+            "Double the most numerous Suits", None],
+        [18, "The Sapphire Port", "NonSuit", "Win highest score", 8]
+    ]
+
+
+class Table():
+    def __init__(self):
+        self.cards = {}
+        self.win_ties = False
+
+    def place_card(self, card):
+        self.cards[card.cid] = (card)
+
+    def remove_cards(self):
+        tmp_crds = {k: v for (k, v) in self.cards.items() if v.frozen is False}
+        self.cards = {k: v for (k, v) in self.cards.items() if v.frozen is True}
+        return tmp_crds
+
+    def __str__(self):
+        s = "\n".join(str(crd) for crd in self.cards)
+        return(s)
+
+
+class Deck():
+    def __init__(self):
+        self.deck = list(range(1, 18))
+        shuffle(self.deck)
+
+    def pop(self):
+        return self.deck.pop()
+
+
+class Hand():
+    def __init__(self):
+        self.cards = {}
+
+    def pull_card(self, card):
+        self.cards[card.cid] = card
+
+    def place_card(self, cid):
+        return self.cards.pop(cid)
 
 
 class Card():
-    # TODO is a Card really immutable?
     """
     Store every relevant attribute about the ToT cards.
-    Create only one instance from each different card, and store it in __all_cards__
-    list.
     """
+    def __init__(self, cid, name, suit):
+        self.__cid = cid
+        self.name = name
+        self.suit = suit
+        self.frozen = False
 
-    # for immutability use __slots__ instead of __dict__ to store attributes
-    __slots__ = ['number', 'name', 'suit', 'initialized']
-
-    def __new__(cls, *args, **kw):
-        # TODO add description
-
-        # If the class was called with positional argument then the number of the
-        # card sould be the 0th element in the args list.
-        # if the class was called without ani positional argument than the number
-        # is stored in the kw dictionary
-        if len(args):
-            number = args[0]
-        else:
-            number = kw['number']
-        # Check if this number was already defined
-        card_idx = cls._find_id_in_card_list(number, __all_cards__)
-
-        # if the card number havn't been already created create it and signal that
-        # initialization still required for this class
-        # else the already created and initialized instance is returned from the
-        # __all_cards__ list
-        if card_idx is None:
-            instance = super().__new__(cls)
-            __all_cards__.append(instance)
-            card_idx = len(__all_cards__) - 1
-            super(Card, instance).__setattr__('initialized', False)
-            # instance.initialized = False
-
-        return __all_cards__[card_idx]
-
-    def __init__(self, number=0, name=None, suit=None):
-        # TODO add description
-        if self.initialized:
-            # TODO add logging feautre here
-            print("This item has been already initialized")
-            return
-        # because of the redefinition of __setattr__ the . notation doesn't work
-        # use the super's setattr instead.
-        # self.number=number
-        # self.name=name
-        # self.suit=suit
-        # self.__initialized=True
-        super().__setattr__('number', number)
-        super().__setattr__('name', name)
-        super().__setattr__('suit', suit)
-        super().__setattr__('initialized', True)
-
-    def __setattr__(self, name, value):
+    @property
+    def cid(self):
         """
-        Remove the possibility to modify attributes, so the class becomes immutable
+        cid is private property to as this is used to create hash and hence
+        needs to be unchanged.
         """
-        msg = "{} has no attribut {}".format(self.__class__, name)
-        raise AttributeError(msg)
+        return self.__cid
 
     def __str__(self):
-        # s="number: {number}, name: {name}, suit: {suit}".format(**self.__dict__)
-        s = "number: {}, name: {}, suit: {}".format(self.number, self.name, self.suit)
+        s = "cid: {_Card__cid}, name: {name}, suit: {suit.name}".format(**self.__dict__)
         return s
 
     def __lt__(self, other):
         if isinstance(other, Card):
-            return self.number < other.number
+            return self.cid < other.cid
+        else:
+            return NotImplemented
+
+    def __eq__(self, other):
+        if isinstance(other, Card):
+            return self.cid == other.cid
         else:
             return NotImplemented
 
     def __hash__(self):
-        return hash(self.number)
+        return hash(self.cid)
 
-    @classmethod
-    def _find_id_in_card_list(cls, number, card_list):
+    def freeze(self):
+        self.frozen = True
+
+    @staticmethod
+    def _find_id_in_card_list(number, card_list):
         """
         Searches for the card number in the given card_list and returns it's index
         if found and None when not.
         """
         # TODO add proper description
 
-        tmp_car = next(filter(lambda x: x[1].number == number, enumerate(card_list)), (None, None))
-        return tmp_car[0]
+        tmp_crd = next(filter(lambda x: x[1].number == number, enumerate(card_list)), (None, None))
+        return tmp_crd[0]
+
+
+def generate_cards():
+    for crd in __card_raw_data__:
+        _all_cards.append(Card(crd[0], crd[1], Suit[crd[2]]))
+
+
+def print_all_cards():
+    for crd in _all_cards:
+        print(crd)
