@@ -65,7 +65,8 @@ class Win_Highest():
     def __call__(self, plt, other):
         if plt.max_point_win > other.max_point_win:
             return 1
-        if plt.max_point_win == other.max_point_win and plt.win_ties:
+        if (plt.max_point_win == other.max_point_win and plt.win_ties
+                and plt.max_point_win != 0):
             return 1
         return 0
 
@@ -124,6 +125,7 @@ class Table():
         self.eval_non_vps()
         print("This is the Table before VP evaluation:\n{}".format(self))
         self.eval_vps()
+        self.eval_highest()
         print("----------------------------------------------")
 
     def eval_non_vps(self):
@@ -133,6 +135,10 @@ class Table():
     def eval_vps(self):
         self.plt1.eval_vps()
         self.plt2.eval_vps()
+
+    def eval_highest(self):
+        self.plt1.eval_highest()
+        self.plt2.eval_highest()
 
     def get_other_plt(self, plt):
         return self.plt1 if plt is self.plt2 else self.plt2
@@ -211,13 +217,22 @@ class PlayerTable():
         # print("{} : win_ties = {}\n".format(self.name, self.win_ties,))
 
     def eval_vps(self):
-        for crd in (v for __, v in self.cards.items() if v.vp is not None):
+        for crd in (v for __, v in self.cards.items() if (v.vp is not None
+                    and v.cid != 18)):
             tmp_vp = crd.vp * crd.evaluate(self, self.table.get_other_plt(self))
             print("I won {} points with card {}".format(tmp_vp, crd))
             if self.max_point_win < tmp_vp:
                 self.max_point_win = tmp_vp
             self.vp += tmp_vp
-        print("Toal points after this round: {}".format(self.vp))
+        print("Total points after this round: {}".format(self.vp))
+
+    def eval_highest(self):
+        for __, crd in self.cards.items():
+            if crd.cid == 18:
+                print(crd)
+                tmp_vp = crd.vp * crd.evaluate(self, self.table.get_other_plt(self))
+                print("I won {} points with card {}".format(tmp_vp, crd))
+                self.vp += tmp_vp
 
     def get_num_of_suits(self, suits=None):
         if isinstance(suits, Iterable) is False:
