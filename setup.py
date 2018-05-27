@@ -65,7 +65,7 @@ setup(
     # $ pip install -e .[dev,test]
     extras_require={
         'doc': ['Sphinx', 'autodoc'],
-        'test': ['pytest', 'coverage', 'coveralls'],
+        'test': ['pytest', 'coverage', 'coveralls', 'pytest-cov'],
     },
 
     # List dependencies for testing

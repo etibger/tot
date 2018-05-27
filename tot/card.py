@@ -2,6 +2,7 @@
 
 from enum import Enum, auto
 from random import shuffle, choice
+from collections import Iterable
 
 # __all__ = ['Card', 'Suit']
 
@@ -18,27 +19,95 @@ class Suit(Enum):
 _all_cards = []
 
 
+class Win_Majority():
+    def __init__(self, suit):
+        self.suit = suit
+
+    def __call__(self, plt, other):
+        my_count = plt.get_num_of_suits(self.suit)
+        other_count = other.get_num_of_suits(self.suit)
+        if my_count > other_count:
+            return 1
+        if my_count == other_count and plt.win_ties and my_count != 0:
+            return 1
+        return 0
+
+
+class For_Each_Point():
+    def __init__(self, suit):
+        self.suit = suit
+
+    def __call__(self, plt, other):
+        return plt.get_num_of_suits(self.suit)
+
+
+class For_Each_NotOwn():
+    def __call__(self, plt, other):
+        s = 0
+        for k, v in plt.crd_cnt.items():
+            if k is not Suit.NonSuit:
+                s += 1
+        return 5 - s
+
+
+class More_Single_Suit():
+    def __call__(self, plt, other):
+        my_cnt = plt.get_num_of_single()
+        other_cnt = other.get_num_of_single()
+        if my_cnt > other_cnt:
+            return 1
+        if my_cnt == other_cnt and plt.win_ties and my_cnt != 0:
+            return 1
+        return 0
+
+
+class Win_Highest():
+    def __call__(self, plt, other):
+        if plt.max_point_win > other.max_point_win:
+            return 1
+        if plt.max_point_win == other.max_point_win and plt.win_ties:
+            return 1
+        return 0
+
+
 __card_raw_data__ = [
-        [1, "Kings Nest", "Palace", "Win ties", None],
-        [2, "Ancient Divide", "Palace", "Win majority of Stronghold", 7],
-        [3, "Eternal Palace", "Palace", "For each Library", 3],
-        [4, "The Great Library of Ahm", "Library", "Win majority of Temple", 7],
-        [5, "The Mana Well", "Library", "For each Set Palace,Stronghold,Temple", 9],
-        [6, "The Citadel of the Prophets", "Library", "For each Garden", 3],
-        [7, "Golden Ziggurat", "Garden", "Win majority of Palace", 7],
-        [8, "Gods Bath", "Garden", "For each Stronghold", 3],
+        [1, "Kings Nest", "Palace", "Win ties", None, None],
+        [2, "Ancient Divide", "Palace", "Win majority of Stronghold",
+            7, Win_Majority(Suit.Stronghold)],
+        [3, "Eternal Palace", "Palace", "For each Library",
+            3, For_Each_Point(Suit.Library)],
+        [4, "The Great Library of Ahm", "Library", "Win majority of Temple",
+            7, Win_Majority(Suit.Temple)],
+        [5, "The Mana Well", "Library", "For each Set Palace,Stronghold,Temple",
+            9, For_Each_Point([Suit.Palace, Suit.Stronghold, Suit.Temple])],
+        [6, "The Citadel of the Prophets", "Library", "For each Garden",
+            3, For_Each_Point(Suit.Garden)],
+        [7, "Golden Ziggurat", "Garden", "Win majority of Palace",
+            7, Win_Majority(Suit.Palace)],
+        [8, "Gods Bath", "Garden", "For each Stronghold",
+            3, For_Each_Point(Suit.Stronghold)],
         [9, "The Maze of the Damend", "Garden",
-            "For each set Palace,Stronghold,Garden,Library,Temple", 13],
-        [10, "The Eye of the North", "Stronghold", "For each NotOwn Suit", 3],
-        [11, "The Jinn Shackles", "Stronghold", "For each Stronghold", 3],
-        [12, "Old Man's Pass", "Stronghold", "Win majority of Library", 7],
-        [13, "Blood-tear Spring", "Temple", "Win majority of Gaden", 7],
-        [14, "The Sky Pillars", "Temple", "For each set Library,Garden", 5],
-        [15, "The Vestibule", "Temple", "For each Palace", 3],
-        [16, "The Molehill", "NonSuit", "Win more SingleSuits", 8],
+            "For each set Palace,Stronghold,Garden,Library,Temple",
+            13, For_Each_Point([Suit.Palace, Suit.Stronghold, Suit.Garden,
+                                Suit.Library, Suit.Temple])],
+        [10, "The Eye of the North", "Stronghold", "For each NotOwn Suit",
+            3, For_Each_NotOwn()],
+        [11, "The Jinn Shackles", "Stronghold", "For each Stronghold",
+            3, For_Each_Point(Suit.Stronghold)],
+        [12, "Old Man's Pass", "Stronghold", "Win majority of Library",
+            7, Win_Majority(Suit.Library)],
+        [13, "Blood-tear Spring", "Temple", "Win majority of Gaden",
+            7, Win_Majority(Suit.Garden)],
+        [14, "The Sky Pillars", "Temple", "For each set Library,Garden",
+            5, For_Each_Point([Suit.Library, Suit.Garden])],
+        [15, "The Vestibule", "Temple", "For each Palace",
+            3, For_Each_Point(Suit.Palace)],
+        [16, "The Molehill", "NonSuit", "Win more SingleSuits",
+            8, More_Single_Suit()],
         [17, "The Roof of the World", "NonSuit",
-            "Double the most numerous Suits", None],
-        [18, "The Sapphire Port", "NonSuit", "Win highest score", 8]
+            "Double the most numerous Suits", None, None],
+        [18, "The Sapphire Port", "NonSuit", "Win highest score",
+            8, Win_Highest()]
     ]
 
 
@@ -53,14 +122,24 @@ class Table():
 
     def evaluate_table(self):
         self.eval_non_vps()
+        print("This is the Table before VP evaluation:\n{}".format(self))
         self.eval_vps()
+        print("----------------------------------------------")
 
     def eval_non_vps(self):
         self.plt1.eval_non_vps()
         self.plt2.eval_non_vps()
 
     def eval_vps(self):
-        pass
+        self.plt1.eval_vps()
+        self.plt2.eval_vps()
+
+    def get_other_plt(self, plt):
+        return self.plt1 if plt is self.plt2 else self.plt2
+
+    def get_other_num_of_suits(self, plt, suits):
+        other_plt = self.plt1 if plt is self.plt2 else self.plt2
+        return other_plt.get_num_of_suits(suits)
 
 
 class PlayerTable():
@@ -68,9 +147,10 @@ class PlayerTable():
         self.cards = {}
         self.table = table
         self.win_ties = False
-        self.double_max = False
         self.name = name
         self.crd_cnt = {}
+        self.max_point_win = 0
+        self.vp = 0
 
     def place_card(self, card):
         self.cards[card.cid] = (card)
@@ -83,6 +163,8 @@ class PlayerTable():
         for k, v in self.cards.items():
             self.crd_cnt[v.suit] = self.crd_cnt.get(v.suit, 0) + 1
 
+        self.win_ties = False
+        self.max_point_win = 0
         return tmp_crds
 
     def discard_card(self, cid):
@@ -103,21 +185,54 @@ class PlayerTable():
         return max(list(self.cards.keys()))
 
     def __str__(self):
-        s = "".join(("{}:\n{}\n".format(self.name, self.crd_cnt),
-                    "\n".join(str(crd) for __, crd in self.cards.items())))
+        s = "".join(
+                ("\n{}:\n{}\n".format(self.name, self.crd_cnt),
+                 "Win ties: {}\n".format(self.win_ties),
+                 "\n".join(str(crd) for __, crd in self.cards.items())))
         return(s)
 
+    def double_max(self):
+        # print("Before dobuling: {}".format(self))
+        # TODO change this to comprehension
+        m = self.crd_cnt[max(self.crd_cnt, key=self.crd_cnt.get)]
+        for k, v in self.crd_cnt.items():
+            if self.crd_cnt[k] == m:
+                self.crd_cnt[k] *= 2
+        # print("After dobuling: {}".format(self))
+
     def eval_non_vps(self):
-        self.win_ties = False
-        print("These are the Non Victory Point Cards:")
+        # print("These are the Non Victory Point Cards:")
         for crd in (v for __, v in self.cards.items() if v.vp is None):
             if crd.cid == 1:
                 self.win_ties = True
             if crd.cid == 17:
-                self.double_max = True
+                self.double_max()
             print(crd)
-        print("{} : win_ties = {}, double_max = {}\n".format(
-            self.name, self.win_ties, self.double_max))
+        # print("{} : win_ties = {}\n".format(self.name, self.win_ties,))
+
+    def eval_vps(self):
+        for crd in (v for __, v in self.cards.items() if v.vp is not None):
+            tmp_vp = crd.vp * crd.evaluate(self, self.table.get_other_plt(self))
+            print("I won {} points with card {}".format(tmp_vp, crd))
+            if self.max_point_win < tmp_vp:
+                self.max_point_win = tmp_vp
+            self.vp += tmp_vp
+        print("Toal points after this round: {}".format(self.vp))
+
+    def get_num_of_suits(self, suits=None):
+        if isinstance(suits, Iterable) is False:
+            suits = [suits]
+        ns = []
+        for suit in suits:
+            ns.append(self.crd_cnt.get(suit, 0))
+        return(min(ns))
+
+    def get_num_of_single(self):
+        s = 0
+        for k, v in self.crd_cnt.items():
+            if v == 1:
+                s += 1
+        return s
 
 
 class Deck():
@@ -156,12 +271,13 @@ class Card():
     """
     Store every relevant attribute about the ToT cards.
     """
-    def __init__(self, cid, name, suit, vp):
+    def __init__(self, cid, name, suit, vp, evaluate):
         self.__cid = cid
         self.name = name
         self.suit = suit
         self.vp = vp
         self.frozen = False
+        self.evaluate = evaluate
 
     @property
     def cid(self):
@@ -198,7 +314,7 @@ class Card():
 
 def generate_cards():
     for crd in __card_raw_data__:
-        _all_cards.append(Card(crd[0], crd[1], Suit[crd[2]], crd[4]))
+        _all_cards.append(Card(crd[0], crd[1], Suit[crd[2]], crd[4], crd[5]))
 
 
 def del_cards():
